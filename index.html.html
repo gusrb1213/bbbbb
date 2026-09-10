@@ -1,0 +1,934 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+ /* 법정 — 호두나무 · 황동 · 양피지 */
+ --bg:#100C08;
+ --wood:#241A11; --wood2:#2F2317; --wood3:#3A2C1D;
+ --brass:#C9A227; --brass2:#8C6F1C; --brass3:#5A470F;
+ --parch:#EFE6D2; --parch2:#E2D6BC; --ink:#1F1A12;
+ --tx:#EBE2D2; --dm:#9B8E77;
+ --ox:#C0453F; --sa:#5FA86B; --wa:#D9A227; --in:#B99A55;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);
+ font-family:'IBM Plex Sans KR',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.px{font-family:'Nanum Myeongjo',serif;font-weight:800;letter-spacing:.01em}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 법정 조명 · 나뭇결 */
+.vig{position:fixed;inset:0;pointer-events:none;z-index:44;
+ background:radial-gradient(ellipse at 50% 22%,rgba(201,162,39,.10),transparent 55%),
+            radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(0,0,0,.72) 100%)}
+.scan{position:fixed;inset:0;pointer-events:none;z-index:45;opacity:.35;
+ background:repeating-linear-gradient(96deg,rgba(120,90,40,.05) 0,rgba(120,90,40,.05) 2px,transparent 2px,transparent 7px)}
+
+.app{max-width:440px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;
+ padding:16px 15px 24px;position:relative;z-index:1}
+.hide{display:none!important}
+
+/* 목재 패널 + 황동 테두리 */
+.win{background:linear-gradient(168deg,var(--wood2),var(--wood) 70%);
+ border:1px solid var(--brass3);
+ box-shadow:inset 0 1px 0 rgba(201,162,39,.22), 0 4px 14px rgba(0,0,0,.5)}
+
+/* 상단 — 법정 머리글 */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+ padding-bottom:11px;border-bottom:1px solid var(--brass3);position:relative}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:1px;background:rgba(201,162,39,.25)}
+.logo{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:19px;letter-spacing:.06em;color:var(--parch)}
+.logo b{color:var(--brass)}
+.prog{font-size:11px;color:var(--dm);letter-spacing:.06em}
+
+.k{font-size:10.5px;letter-spacing:.3em;color:var(--brass);margin-bottom:12px}
+h1{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:25px;margin:0 0 14px;
+ letter-spacing:.01em;color:var(--parch)}
+.lead{font-size:13px;color:var(--dm);line-height:1.8;margin:0 0 18px}
+
+.rules{padding:16px;font-size:12.5px;line-height:1.85;color:var(--dm);margin-bottom:20px}
+.rules b{color:var(--brass);font-family:'Nanum Myeongjo',serif;font-weight:700}
+.score-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.score-tbl td{padding:5px 0;color:var(--dm);border-bottom:1px dotted rgba(201,162,39,.18)}
+.score-tbl td:last-child{text-align:right;color:var(--brass);font-weight:600}
+
+/* 황동 버튼 */
+.btn{width:100%;border:1px solid var(--brass2);padding:14px;cursor:pointer;
+ font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:16px;letter-spacing:.04em;
+ background:linear-gradient(178deg,#4A3820,#2A1E12);color:var(--brass);
+ box-shadow:inset 0 1px 0 rgba(201,162,39,.3),0 3px 10px rgba(0,0,0,.45)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.g{background:transparent;border:1px solid var(--wood3);color:var(--dm);
+ font-size:13px;padding:12px;box-shadow:none}
+
+/* 사건 기록 — 양피지 문서 */
+.case{padding:0;margin-bottom:14px;overflow:hidden}
+.case .tag{font-size:10.5px;letter-spacing:.16em;color:var(--brass);
+ padding:11px 15px;border-bottom:1px solid var(--brass3);background:rgba(0,0,0,.25)}
+.case .prob{font-size:13.5px;line-height:1.7;white-space:pre-line;
+ margin:0;padding:14px 15px;color:var(--parch2);border-bottom:1px dashed rgba(201,162,39,.22)}
+
+/* 풀이 각 줄 — 겹침 방지를 위해 flex 배치 */
+.step{display:flex;gap:11px;align-items:flex-start;
+ background:var(--parch);color:var(--ink);
+ padding:11px 13px;margin:9px 12px;border-left:3px solid var(--wood3);
+ font-size:13.5px;line-height:1.6;cursor:pointer;transition:.12s}
+.step .no{flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+ font-weight:600;color:#8A7A5C;padding-top:3px;letter-spacing:.04em;white-space:nowrap}
+.step:active{background:var(--parch2)}
+.step.sel{border-left-color:var(--brass);background:#F7EFDA;
+ box-shadow:0 0 0 1px var(--brass),0 0 12px rgba(201,162,39,.25)}
+.step.sel .no{color:#8A6D14}
+
+/* 진행 표시 */
+.stepbar{display:flex;gap:4px;margin-bottom:12px}
+.stepbar i{flex:1;height:3px;background:var(--wood3);border-radius:1px}
+.stepbar i.on{background:var(--brass);box-shadow:0 0 7px rgba(201,162,39,.6)}
+.stepbar i.done{background:var(--brass3)}
+.stepname{font-size:10.5px;letter-spacing:.14em;color:var(--dm);margin-bottom:12px}
+.hint{font-size:11.5px;color:var(--dm);line-height:1.6;margin:-3px 0 10px;font-style:italic}
+
+/* 사건 참조 패널 */
+.ref{margin-bottom:14px;background:linear-gradient(168deg,var(--wood2),var(--wood) 70%);
+ border:1px solid var(--brass3)}
+.ref summary{cursor:pointer;padding:10px 13px;font-size:11.5px;color:var(--brass);
+ list-style:none;display:flex;justify-content:space-between;align-items:center;letter-spacing:.04em}
+.ref summary::-webkit-details-marker{display:none}
+.ref summary::after{content:"▾";color:var(--dm);font-size:11px}
+.ref[open] summary::after{content:"▴"}
+.ref .inner{padding:0 13px 13px}
+.ref .prob2{font-size:12px;line-height:1.65;white-space:pre-line;color:var(--dm);
+ padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed rgba(201,162,39,.22)}
+.ref .st2{display:flex;gap:9px;align-items:flex-start;
+ font-size:12.5px;line-height:1.6;padding:7px 10px;margin-bottom:5px;
+ background:var(--parch);color:var(--ink);border-left:3px solid var(--wood3)}
+.ref .st2 .n2{flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:10px;
+ color:#8A7A5C;padding-top:3px}
+.ref .st2.mine{border-left-color:var(--brass);background:#F7EFDA}
+.ref .st2.mine .n2{color:#8A6D14;font-weight:700}
+.ref .mytag{font-size:11px;color:var(--brass);margin-top:10px;padding-top:9px;
+ border-top:1px dashed rgba(201,162,39,.22)}
+
+/* 선택지 — 황동 명패 */
+.sh{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:13px;letter-spacing:.03em;
+ color:var(--brass);margin:16px 0 9px;padding-bottom:6px;
+ border-bottom:1px solid rgba(201,162,39,.25)}
+.opt{width:100%;text-align:left;background:linear-gradient(172deg,var(--wood2),var(--wood));
+ border:1px solid var(--wood3);
+ padding:12px 13px 12px 26px;margin-bottom:7px;color:var(--tx);
+ font:inherit;font-size:13px;line-height:1.55;cursor:pointer;position:relative}
+.opt::before{content:"§";position:absolute;left:10px;top:12px;
+ color:var(--brass2);font-size:12px;font-family:'Nanum Myeongjo',serif}
+.opt.sel{border-color:var(--brass);background:linear-gradient(172deg,#3E2F1B,#2A2013);
+ box-shadow:inset 0 1px 0 rgba(201,162,39,.3)}
+.opt.sel::before{color:var(--brass)}
+.opt .c{float:right;color:var(--brass);font-size:11px}
+.opt .d{display:block;font-size:11.5px;color:var(--dm);margin-top:4px;line-height:1.5}
+.opt:active{transform:translateY(1px)}
+
+/* 변호인 진술 */
+.claim{padding:13px 14px;margin-bottom:14px;font-size:13px;line-height:1.65;
+ border-left:3px solid var(--ox)}
+.claim .who{font-family:'Nanum Myeongjo',serif;font-weight:700;font-size:10.5px;
+ letter-spacing:.14em;color:var(--ox);margin-bottom:7px}
+
+/* 판결 결과 */
+.res-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12.5px}
+.res-row .l{flex:1;color:var(--dm)}
+.res-row .v{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums;
+ font-family:'IBM Plex Mono',monospace}
+.res-row .v.pos{color:var(--sa)} .res-row .v.neg{color:var(--ox)} .res-row .v.zero{color:var(--dm)}
+.res-row .badge{flex:0 0 auto;font-size:10px;padding:3px 8px;letter-spacing:.06em;
+ font-family:'Nanum Myeongjo',serif;font-weight:700;border:1px solid}
+.res-row .badge.ok{border-color:rgba(95,168,107,.5);background:rgba(95,168,107,.12);color:var(--sa)}
+.res-row .badge.no{border-color:rgba(192,69,63,.5);background:rgba(192,69,63,.12);color:var(--ox)}
+.res-row .badge.part{border-color:rgba(217,162,39,.5);background:rgba(217,162,39,.12);color:var(--wa)}
+
+.grade{text-align:center;padding:22px 0 16px}
+.grade .g{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:46px;
+ letter-spacing:.02em;color:var(--brass);text-shadow:0 0 24px rgba(201,162,39,.35)}
+.grade .sub{font-size:12.5px;color:var(--dm);margin-top:9px;letter-spacing:.04em}
+
+/* 해설 */
+.why{font-size:11.5px;line-height:1.6;color:var(--dm);margin:5px 0 13px;
+ padding:8px 11px;background:rgba(0,0,0,.25);border-left:2px solid var(--brass3)}
+.why b{color:var(--sa);font-family:'Nanum Myeongjo',serif;font-weight:700}
+.why.bad{border-left-color:var(--ox)}
+.why.bad b{color:var(--ox)}
+.why.part{border-left-color:var(--wa)}
+.why.part b{color:var(--wa)}
+.pick{font-size:11.5px;color:var(--parch2);margin-top:3px;padding-left:2px}
+
+/* 사건 팩 선택 */
+.lv{width:100%;text-align:left;background:linear-gradient(172deg,var(--wood2),var(--wood));
+ border:1px solid var(--wood3);padding:13px 14px;margin-bottom:8px;color:var(--tx);
+ font:inherit;font-size:13.5px;cursor:pointer}
+.lv.sel{border-color:var(--brass);background:linear-gradient(172deg,#3E2F1B,#2A2013)}
+.lv .sub2{display:block;font-size:11px;color:var(--dm);margin-top:4px;line-height:1.5}
+
+/* 직위 · 신뢰도 */
+.rankbox{padding:13px 15px;margin-bottom:16px;text-align:center}
+.rankbox .rk{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:18px;color:var(--brass)}
+.rankbox .rksub{font-size:11.5px;color:var(--dm);margin-top:5px}
+.rankbar{font-size:11.5px;color:var(--dm);margin-bottom:12px;padding-bottom:9px;
+ border-bottom:1px dashed rgba(201,162,39,.22)}
+.rankbar b{color:var(--brass)}
+.tokennote{font-size:11px;color:#8A7E68;line-height:1.65;margin-top:11px;padding-top:10px;
+ border-top:1px dashed rgba(201,162,39,.22)}
+.tokennote b{color:var(--brass);font-family:inherit}
+.trustbar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;
+ padding:11px 14px;margin-bottom:13px;font-size:12px}
+.trustbar .tl{color:var(--dm);letter-spacing:.08em;font-size:10.5px}
+.trustbar .tv{color:var(--tx);font-family:'IBM Plex Mono',monospace}
+.trustbar .tv b{color:var(--brass);font-size:15px}
+.trustbar .tv i{font-style:normal;font-size:11px;margin-left:6px}
+.trustbar .tv i.up{color:var(--sa)} .trustbar .tv i.flat{color:var(--dm)}
+.trustbar .tr2{margin-left:auto;color:var(--brass);font-size:11px}
+
+/* 사건 카드 */
+.cs{width:100%;text-align:left;background:linear-gradient(172deg,var(--wood2),var(--wood));
+ border:1px solid var(--wood3);padding:12px 14px;margin-bottom:8px;color:var(--tx);
+ font:inherit;cursor:pointer;display:block}
+.cs .csl{display:inline-block;font-family:'Nanum Myeongjo',serif;font-weight:700;
+ font-size:11px;color:var(--brass);letter-spacing:.06em}
+.cs .cst{display:block;font-size:13.5px;margin-top:4px}
+.cs .csm{display:block;font-size:11px;color:var(--dm);margin-top:4px}
+.cs.sel{border-color:var(--brass);background:linear-gradient(172deg,#3E2F1B,#2A2013)}
+.cs.lk{opacity:.45;cursor:not-allowed}
+.cs.lk .csm{color:var(--ox)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+ background:linear-gradient(178deg,#4A3820,#241A11);border:1px solid var(--brass2);
+ padding:10px 17px;font-size:12.5px;color:var(--brass);z-index:60;opacity:0;
+ pointer-events:none;white-space:nowrap}
+.toast.on{animation:ts 1.6s ease-out}
+@keyframes ts{0%{opacity:0;transform:translateX(-50%) translateY(8px)}
+ 12%{opacity:1;transform:translateX(-50%)}80%{opacity:1}100%{opacity:0}}
+.note{font-size:11px;color:#7A6E5B;line-height:1.7;margin-top:16px;padding-top:13px;
+ border-top:1px dashed rgba(201,162,39,.22)}
+</style>
+
+<div class="vig"></div><div class="scan"></div>
+<div class="app">
+<div class="top"><div class="logo px">오답법정<b>.</b></div><div class="prog mono" id="prog"></div></div>
+<div id="root"></div>
+</div>
+<div class="toast px" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+
+/* ── 오류 사유 (수학편) ── */
+const MKINDS=[
+ {k:"A",t:"근거가 아예 없다"},
+ {k:"B",t:"식은 맞지만 이 결론을 지지하지 않는다"},
+ {k:"C",t:"몇 개의 예로 전체를 증명했다"},
+ {k:"D",t:"실제 성립 범위보다 넓게 결론지었다"},
+ {k:"E",t:"계산 자체가 틀렸다"},
+ {k:"F",t:"다른 정리·공식을 잘못 적용했다"},
+ {k:"G",t:"용어의 정의를 착각했다"}
+];
+
+/* ── 사건 데이터: Claim(주장)→Evidence(근거)→Condition(조건) 문법 그대로 ── */
+const CASES=[
+{
+ id:"c1", chapter:"미적분Ⅰ", level:"Lv.1", subject:"미적분Ⅰ · 도함수의 활용",
+ problem:"조건: f'(x) > 0 (모든 실수 x) , f(0) = -1\n다음은 이를 바탕으로 f(1)을 서술한 풀이다.",
+ steps:[
+  "f'(x) > 0 이므로 f는 증가함수다.",
+  "따라서 f(1) > f(0) = -1 이다.",
+  "그러므로 f(1) > 0 이다."
+ ],
+ firstBreak:3, kindAnswer:"D", cand:["E","B","D","G"],
+ evOptions:[
+  {t:"논리: 2번째 줄에서 얻은 것은 f(1) > -1 뿐이다. 여기서 f(1) > 0 으로 넘어가는 추론이 어디에도 없다.",s:2,
+   d:"결론이 전제에서 따라 나오지 않는다는 것을 직접 보인다."},
+  {t:"반례: f(x) = x/2 - 1 이면 f'(x) = 1/2 > 0 이고 f(0) = -1 인데, f(1) = -1/2 < 0 이다.",s:2,
+   d:"주어진 조건을 모두 만족하면서 결론만 무너뜨린다."},
+  {t:"f(0) = -1 에서 출발하므로, 조금 증가해도 0을 넘지 못할 수 있다.",s:1,
+   d:"방향은 옳지만 '그럴 수 있다'는 가능성 서술에 그쳐 결정적이지 않다."},
+  {t:"반례: f(x) = -x - 1 이면 f(1) = -2 < 0 이므로 결론이 틀렸다.",s:0,
+   d:"f'(x) = -1 < 0 이라 f'(x) > 0 이라는 조건을 어긴다. 조건 밖의 함수는 반례가 될 수 없다."}
+ ],
+ rival:{
+  claim:"3번째 줄은 비약이 아닙니다. f가 증가함수이고 f(0) = -1 이니, 그래프가 우상향하는 이상 f(1)이 0을 넘는 것은 자연스러운 귀결입니다.",
+  options:[
+   {t:"타당하다 — 우상향하는 그래프라면 그 결론이 따라 나온다.",ok:false},
+   {t:"근거가 없다 — f(1)이 -1을 넘는 것과 0을 넘는 것은 전혀 다른 주장인데, 후자의 근거를 대지 못했다.",ok:true},
+   {t:"핵심을 놓쳤다 — 변호인은 3번째 줄이 아니라 1번째 줄을 옹호하고 있다.",ok:false},
+   {t:"조건을 무시했다 — f(0) = -1 이라는 조건을 쓰지 않았다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"f는 항상 양수라고 정정한다.",ok:false,d:"근거 없는 과잉 정정이다."},
+  {t:"f(1)의 값은 알 수 없다고 정정한다.",ok:false,d:"f(1) > -1 은 실제로 증명 가능한데 그 정보까지 버린다."},
+  {t:"f(1) > -1 까지만 결론지을 수 있다.",ok:true},
+  {t:"결론을 지우고 f는 증가한다는 서술까지만 남긴다.",ok:false,d:"증명 가능한 정보까지 버리는 과소 정정이다."}
+ ],
+ qOptions:[
+  {t:"정답은 f(1) > -1 아닐까요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"-1보다 큰 수는 반드시 양수일까?",ok:true},
+  {t:"미분이 뭔지는 아세요?",ok:false,d:"핵심과 무관하고 도움이 안 된다."},
+  {t:"이 풀이 어디가 틀렸는지 알겠어?",ok:false,d:"막연해서 어디를 봐야 할지 전혀 좁혀주지 못한다."}
+ ]
+},
+{
+ id:"c2", chapter:"공통수학1", level:"Lv.2", subject:"공통수학1 · 명제",
+ problem:"명제: 두 짝수의 합은 항상 짝수다.\n다음은 이를 보인 풀이다.",
+ steps:[
+  "2와 4를 더하면 6이고, 6은 짝수다.",
+  "4와 8을 더하면 12이고, 12는 짝수다.",
+  "몇 가지 예시에서 성립하므로, 짝수와 짝수를 더하면 항상 짝수다."
+ ],
+ firstBreak:3, kindAnswer:"C", cand:["A","C","B","E"],
+ evOptions:[
+  {t:"대입: 10과 20을 더해 30도 짝수임을 추가로 확인한다.",s:0,
+   d:"예시를 하나 더 늘릴 뿐, '모든 경우'를 다뤘다는 근거는 여전히 없다."},
+  {t:"정의: 임의의 짝수를 2k, 2m으로 놓으면 2k + 2m = 2(k+m)이다. 원 풀이는 이 일반화 과정을 거치지 않았다.",s:2,
+   d:"두 예시와 일반 증명의 차이를 정면으로 드러낸다."},
+  {t:"논리: 두 사례에서 참인 것과 모든 짝수 쌍에 대해 참인 것은 서로 다른 명제다.",s:2,
+   d:"예시의 개수와 무관하게 비약이 남는다는 것을 직접 짚는다."},
+  {t:"계산: 2+4=6, 4+8=12 의 계산이 맞는지 검산한다.",s:0,
+   d:"계산은 맞다. 문제는 계산이 아니라 두 예시로 전체를 결론지은 비약이다."}
+ ],
+ rival:{
+  claim:"두 짝수의 합이 짝수라는 명제 자체는 참입니다. 결론이 참인 이상, 이 풀이를 틀렸다고 몰아붙일 수는 없습니다.",
+  options:[
+   {t:"타당하다 — 명제가 참인 것은 사실이다. 이 점은 인정하고, 결론이 아니라 증명 방식으로 논점을 좁혀야 한다.",ok:true},
+   {t:"근거가 없다 — 명제가 참이라는 근거를 변호인이 대지 못했다.",ok:false},
+   {t:"핵심을 놓쳤다 — 변호인은 3번째 줄이 아닌 다른 줄을 옹호하고 있다.",ok:false},
+   {t:"조건을 무시했다 — 짝수의 정의를 쓰지 않았다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"예시를 몇 개 더 추가한다.",ok:false,d:"같은 방식의 반복이라 공백이 남는다."},
+  {t:"2k, 2m으로 놓고 합이 2(k+m)임을 보이는 일반 증명으로 교체한다.",ok:true},
+  {t:"명제 자체가 틀렸으므로 폐기한다.",ok:false,d:"명제는 참이다. 증명 방식이 문제였다."},
+  {t:"홀수의 경우도 함께 살펴본다.",ok:false,d:"원래 명제와 무관한 확장이다."}
+ ],
+ qOptions:[
+  {t:"정답은 2(k+m) 아닌가요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"몇 개의 예로 확인한 것과, 모든 경우를 증명한 것은 같은 걸까?",ok:true},
+  {t:"6이랑 12는 짝수 맞죠?",ok:false,d:"이미 서로 동의하는 부분이라 도움이 안 된다."},
+  {t:"짝수를 몇 개까지 확인해 봤어?",ok:false,d:"예시를 더 늘리는 방향으로 오해하게 만든다."}
+ ]
+},
+{
+ id:"c3", chapter:"공통수학1", level:"Lv.3", subject:"공통수학1 · 다항식",
+ problem:"다항식 (x+2)(x-3) - (x-1)² 을 전개하여 간단히 하는 풀이다.",
+ steps:[
+  "(x+2)(x-3) = x² - x - 6 이다.",
+  "(x-1)² = x² - 1 이다.",
+  "따라서 주어진 식은 (x²-x-6) - (x²-1) = -x - 5 이다.",
+  "그러므로 이 다항식은 x = 5일 때 값이 0이 된다."
+ ],
+ firstBreak:2, kindAnswer:"F", cand:["F","B","E","D"],
+ evOptions:[
+  {t:"정의: (a-b)² = a² - 2ab + b² 이므로 (x-1)² = x² - 2x + 1 이다.",s:2,
+   d:"완전제곱 공식을 올바르게 적용해 최초 오류를 정확히 짚는다."},
+  {t:"대입: x=2를 넣으면 (2-1)² = 1 인데, 원 풀이의 x²-1 은 3 이다.",s:2,
+   d:"한 값만으로도 두 식이 다름을 확정할 수 있다. 반증에는 한 개면 충분하다."},
+  {t:"계산: -x-5 에 x=5를 대입하면 -10 이지 0이 아니다.",s:1,
+   d:"4번째 줄의 오류는 맞지만, 최초로 끊어진 2번째 줄은 그대로 둔다."},
+  {t:"그래프: 두 식의 그래프를 그려 서로 겹치는지 확인한다.",s:0,
+   d:"겹치지 않는다는 건 알 수 있어도, 어느 줄에서 처음 어긋났는지는 드러나지 않는다."}
+ ],
+ rival:{
+  claim:"2번째 줄의 전개에는 문제가 없습니다. 정작 틀린 곳은 4번째 줄의 부호인데, 그건 사소한 계산 실수일 뿐입니다.",
+  options:[
+   {t:"타당하다 — 4번째 줄 부호가 실제로 틀렸으니 그 지적이 맞다.",ok:false},
+   {t:"근거가 없다 — 4번째 줄에는 애초에 아무 문제가 없다.",ok:false},
+   {t:"핵심을 놓쳤다 — 부호 오류는 사실이지만, 그것은 2번째 줄의 잘못된 전개가 만들어낸 결과다.",ok:true},
+   {t:"조건을 무시했다 — 다항식의 차수 조건을 빠뜨렸다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"부호만 고쳐서 최종 값은 x=-5일 때 0이라고 정정한다.",ok:false,d:"두 번째 실수만 고칠 뿐, 최초 오류인 완전제곱 전개는 그대로 남는다."},
+  {t:"(x-1)² = x² - 2x + 1 로 정정하면 전체 식은 (x²-x-6)-(x²-2x+1) = x-7 이 된다.",ok:true},
+  {t:"식을 다시 전개할 필요 없이 최종 결과만 음수로 바꾼다.",ok:false,d:"결과만 손대면 전개 오류는 그대로다."},
+  {t:"(x-1)² = x² - 1 은 두고, 앞의 (x+2)(x-3) 전개를 다시 계산한다.",ok:false,d:"앞의 전개는 이미 옳다. 틀린 쪽을 두고 맞는 쪽을 건드린다."}
+ ],
+ qOptions:[
+  {t:"정답은 x-7 아닌가요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"(x-1)(x-1)을 직접 곱하면 가운데에 어떤 항이 나올까?",ok:true},
+  {t:"부호가 왜 틀렸을까?",ok:false,d:"두 번째 오류로 시선을 돌려 최초 오류를 놓치게 만든다."},
+  {t:"완전제곱 공식 외웠어?",ok:false,d:"암기 여부를 묻는 추궁이라 스스로 확인하게 만들지 못한다."}
+ ]
+},
+{
+ id:"c4a", chapter:"공통수학1", level:"Lv.4 · Part 1/2 (학생 풀이)", subject:"공통수학1 · 방정식과 부등식",
+ problem:"부등식 |2x-1| ≤ 5 를 만족하는 정수 x의 개수를 구한다. 학생의 풀이는 다음과 같고, 답은 7개라고 한다.",
+ steps:[
+  "|2x-1| ≤ 5 이므로 -5 ≤ 2x-1 ≤ 5 이다.",
+  "양변에 1을 더하면 -4 ≤ 2x ≤ 6 이다.",
+  "양변을 2로 나누면 -2 ≤ x ≤ 3 이다.",
+  "정수는 -2,-1,0,1,2,3,4로 총 7개다."
+ ],
+ firstBreak:4, kindAnswer:"E", cand:["E","G","D","B"],
+ evOptions:[
+  {t:"정의: 절댓값 부등식을 -5 ≤ 2x-1 ≤ 5 로 다시 풀어 범위를 재확인한다.",s:0,
+   d:"원 풀이도 이미 같은 식을 썼다. 다시 써도 개수를 잘못 센 사실은 드러나지 않는다."},
+  {t:"대입: -2 ≤ x ≤ 3 에 속하는 정수를 직접 나열하면 -2,-1,0,1,2,3 으로 6개다.",s:2,
+   d:"범위를 그대로 세어 개수 자체를 반증한다."},
+  {t:"논리: 4는 -2 ≤ x ≤ 3 을 만족하지 않으므로 애초에 셀 수 없는 값이다.",s:2,
+   d:"잘못 포함된 원소를 정확히 지목한다."},
+  {t:"그래프: 수직선에 구간을 그려 길이를 잰다.",s:0,
+   d:"구간의 길이(5)와 그 안의 정수 개수는 다른 값이다."}
+ ],
+ rival:{
+  claim:"4번째 줄은 앞에서 구한 범위를 그대로 옮겨 적은 것뿐입니다. 문제를 삼으시려면 3번째 줄에서 2로 나눈 과정을 보셔야죠.",
+  options:[
+   {t:"타당하다 — 범위를 구한 3번째 줄을 먼저 검토하는 것이 순서다.",ok:false},
+   {t:"핵심을 놓쳤다 — 3번째 줄 계산은 정확하다. 범위가 옳아도 그 안의 정수를 잘못 세면 결론은 틀린다.",ok:true},
+   {t:"근거가 없다 — 3번째 줄은 실제로 틀렸으므로 변호인 말이 맞다.",ok:false},
+   {t:"조건을 무시했다 — 정수라는 조건을 빠뜨렸다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"정수는 -2,-1,0,1,2,3으로 6개라고 정정한다.",ok:true},
+  {t:"4를 포함시키되 대신 -3은 제외한다.",ok:false,d:"여전히 범위를 잘못 센다."},
+  {t:"정수가 아니라 실수 범위로 답한다.",ok:false,d:"문제가 요구한 조건과 다르다."},
+  {t:"경계값 -2와 3은 등호가 있으니 제외하고 4개로 정정한다.",ok:false,d:"등호가 있으므로 경계값은 포함해야 한다. 반대로 고쳤다."}
+ ],
+ qOptions:[
+  {t:"정답은 6개 아닌가요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"네가 적은 4는 -2 ≤ x ≤ 3 안에 들어갈까?",ok:true},
+  {t:"절댓값이 무엇인지 아세요?",ok:false,d:"핵심과 무관하다."},
+  {t:"다시 한 번 세어볼래?",ok:false,d:"어디를 봐야 할지 좁혀주지 못해 같은 실수를 반복할 수 있다."}
+ ]
+},
+{
+ id:"c4b", chapter:"공통수학1", level:"Lv.4 · Part 2/2 (AI 풀이)", subject:"공통수학1 · 방정식과 부등식",
+ problem:"같은 문제를 AI가 다른 방식으로 풀었다. 답은 이번에도 7개라고 한다.",
+ steps:[
+  "|2x-1| ≤ 5 이므로 -5 ≤ 2x-1 ≤ 5, 즉 -2 ≤ x ≤ 3 이다.",
+  "절댓값 부등식은 경계값을 두 번씩 세야 한다는 규칙이 있으므로, -2와 3을 각각 두 번 세고 중복을 하나 빼면 7개다."
+ ],
+ firstBreak:2, kindAnswer:"A", cand:["A","D","F","C"],
+ evOptions:[
+  {t:"정의: |A| ≤ b 의 해는 -b ≤ A ≤ b 하나의 조건일 뿐이다. 경계값을 두 번 세는 규칙은 존재하지 않는다.",s:2,
+   d:"지어낸 규칙에 근거가 없음을 정면으로 짚는다."},
+  {t:"논리: 해집합은 조건을 만족하는 값의 모임이므로, 같은 값을 두 번 센다는 발상 자체가 성립하지 않는다.",s:2,
+   d:"집합의 정의에서 규칙이 성립할 수 없음을 보인다."},
+  {t:"계산: -2 ≤ x ≤ 3 의 정수는 6개다.",s:1,
+   d:"결론이 틀렸다는 건 보이지만, 없는 규칙을 근거로 든 문제 자체는 남는다."},
+  {t:"대입: x=-2를 넣으면 |2(-2)-1| = 5 로 경계값이 성립한다.",s:0,
+   d:"참이지만 '두 번 센다'는 주장과는 무관하다."}
+ ],
+ rival:{
+  claim:"규칙을 지어낸 것이 아니라 개수를 잘못 센 것뿐입니다. 숫자만 6으로 고치면 되는 사소한 문제입니다.",
+  options:[
+   {t:"타당하다 — 숫자만 바로잡으면 해결되는 문제다.",ok:false},
+   {t:"근거가 없다 — 개수를 잘못 셌다는 것 자체가 사실이 아니다.",ok:false},
+   {t:"핵심을 놓쳤다 — 존재하지 않는 규칙을 근거로 든 사실은 숫자를 고쳐도 사라지지 않는다.",ok:true},
+   {t:"조건을 무시했다 — 절댓값의 정의를 빠뜨렸다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"경계값만 한 번 더 확인하고 나머지는 그대로 둔다.",ok:false,d:"없는 규칙을 남긴 채 확인만 반복한다."},
+  {t:"정수 대신 유리수 범위로 재정의한다.",ok:false,d:"문제가 요구한 조건을 임의로 바꾼다."},
+  {t:"경계값을 두 번 세는 규칙을 폐기하고, 정수는 -2,-1,0,1,2,3으로 6개라고 정정한다.",ok:true},
+  {t:"규칙은 그대로 두되, 중복을 빼는 부분만 삭제해 8개로 정정한다.",ok:false,d:"없는 규칙을 남긴 채 숫자만 조정한다. 근거는 여전히 없다."}
+ ],
+ qOptions:[
+  {t:"정답은 6개 아닌가요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"경계값을 두 번 세야 한다는 규칙은 어느 정의에서 나온 걸까?",ok:true},
+  {t:"AI라서 실수한 걸까요?",ok:false,d:"비생산적인 질문이다."},
+  {t:"규칙이 정말 맞는지 다시 검색해 볼래?",ok:false,d:"근거를 스스로 따져보게 하는 대신 외부 확인에 떠넘긴다."}
+ ]
+},
+{
+ id:"c5", chapter:"공통수학1", level:"Lv.5", subject:"공통수학1 · 이차방정식",
+ problem:"n이 자연수(n≥1)일 때, 다음은 이차방정식 x²-(n+1)x+n=0 의 두 근이 항상 자연수임을 보이는 풀이다.",
+ steps:[
+  "좌변을 인수분해하면 (x-1)(x-n) = 0 이다.",
+  "따라서 두 근은 x=1, x=n 이다.",
+  "x=1은 자연수이고, x=n도 인수분해로 바로 나온 값이므로 항상 자연수다."
+ ],
+ firstBreak:3, kindAnswer:"B", cand:["D","B","G","A"],
+ evOptions:[
+  {t:"반례: n=0.5를 넣으면 근이 1, 0.5가 되어 자연수가 아니다.",s:0,
+   d:"n=0.5는 애초에 문제의 조건(자연수)을 벗어난 값이라 증거로 쓸 수 없다."},
+  {t:"정의: x=n이 자연수임은 n이 자연수로 주어졌다는 조건에서 오는 것이지, 인수분해에서 나오는 것이 아니다.",s:2,
+   d:"근거가 엉뚱한 곳을 가리키고 있음을 정확히 짚는다."},
+  {t:"논리: 인수분해가 알려주는 것은 근이 1과 n이라는 사실뿐이다. n의 종류에 대해서는 아무 정보도 주지 않는다.",s:2,
+   d:"인수분해와 조건이 서로 다른 정보임을 드러낸다."},
+  {t:"반례: n=0을 넣으면 근이 1, 0이 되는데 0은 자연수가 아니다.",s:0,
+   d:"0도 자연수가 아니므로 역시 조건을 벗어난 값이다."}
+ ],
+ rival:{
+  claim:"x=n이 자연수라는 것은 인수분해에서 곧바로 따라 나옵니다. 3번째 줄에 빠진 것은 없습니다.",
+  options:[
+   {t:"타당하다 — 인수분해로 근이 n임이 나왔으니 자연수임도 함께 보장된다.",ok:false},
+   {t:"근거가 없다 — 인수분해는 근이 n이라는 사실만 줄 뿐, n이 자연수라는 것은 문제에 주어진 조건에서 온다.",ok:true},
+   {t:"핵심을 놓쳤다 — 변호인은 3번째 줄이 아니라 2번째 줄을 옹호하고 있다.",ok:false},
+   {t:"조건을 무시했다 — 인수분해 과정 자체가 틀렸다.",ok:false}
+  ]},
+ corrOptions:[
+  {t:"'n이 자연수로 주어졌으므로 x=n도 자연수다'라고 조건을 명시하여 정정한다.",ok:true},
+  {t:"n=0일 때도 성립하도록 조건을 0 이상의 정수로 넓힌다.",ok:false,d:"문제의 조건을 임의로 바꾼다."},
+  {t:"x=1과 x=n이 근이라는 2번째 줄까지만 남기고 결론을 지운다.",ok:false,d:"결론 자체는 참이다. 지울 게 아니라 근거를 채워야 한다."},
+  {t:"두 근이 자연수임을 수학적 귀납법으로 다시 증명한다.",ok:false,d:"조건 한 줄이면 되는데 불필요하게 과잉된 정정이다."}
+ ],
+ qOptions:[
+  {t:"정답은 조건을 명시하는 것 아닌가요?",ok:false,d:"질문이 아니라 답을 그냥 알려준다."},
+  {t:"x=n이 자연수라는 건 인수분해에서 나온 걸까, 문제에서 주어진 걸까?",ok:true},
+  {t:"인수분해가 뭔지 아세요?",ok:false,d:"핵심과 무관하다."},
+  {t:"n에 아무 수나 넣어볼래?",ok:false,d:"조건을 벗어난 값을 넣게 유도해 오히려 혼란을 준다."}
+ ]
+}
+];
+
+/* ══ 진행 기록 · 신뢰도 ══
+   서버·계정 없이 세션 메모리에만 남는다. 새로고침하면 초기화된다.
+   실제 도입 시 이 객체만 서버 저장으로 교체하면 된다. */
+const SAVE={
+  trust:0,                 /* 누적 신뢰도 — 베팅 토큰과 별개의 자격 지표 */
+  log:[],                  /* {caseId, level, subject, score, max, rounds, at} */
+  retried:{},              /* 재심으로 다시 연 사건 */
+  best(caseId){
+    const r=this.log.filter(x=>x.caseId===caseId);
+    return r.length? Math.max(...r.map(x=>x.score)) : null;
+  },
+  played(caseId){ return this.log.some(x=>x.caseId===caseId); },
+  rank(){
+    const t=this.trust;
+    if(t>=60) return {n:'대법정 판사', next:null, need:0};
+    if(t>=35) return {n:'부장검사', next:'대법정 판사', need:60-t};
+    if(t>=15) return {n:'검사', next:'부장검사', need:35-t};
+    return {n:'수습 검사', next:'검사', need:15-t};
+  }
+};
+const RETRIAL_COST=8;      /* 재심 청구에 드는 신뢰도 */
+const UNLOCK_HARD=6;       /* Lv.4 이상 해금 기준 — 사건 1건을 제대로 풀면 열린다 */
+
+let ci=0, cur=null, queue=[];
+let sel={step:null,kind:null,bet:null,ev:null,obj:null,corr:null,q:null};
+let caseScores=[], caseLog=[];
+const STEPS=['present','accuse','bet','evidence','objection','correction','question','result'];
+const STEPNAME={present:'사건 공개',accuse:'기소',bet:'확신 베팅',evidence:'증거 제출',
+ objection:'이의제기',correction:'최소 정정',question:'교정 질문',result:'판결'};
+let si=0;
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('on');void t.offsetWidth;t.classList.add('on');}
+function setProg(){ $('#prog').textContent = `사건 ${ci+1} / ${queue.length}`; }
+
+/* 7단계 중 현재 위치 */
+function stepBar(){
+  const cells=STEPS.slice(0,7).map((k,i)=>{
+    const cls = i<si ? 'done' : i===si ? 'on' : '';
+    return `<i class="${cls}"></i>`;
+  }).join('');
+  return `<div class="stepbar">${cells}</div>
+   <div class="stepname px">STEP ${Math.min(si+1,7)} / 7 · ${STEPNAME[STEPS[si]]}</div>`;
+}
+
+/* 사건 원문 — 공개 이후 모든 단계에서 다시 열어볼 수 있다 */
+function caseRef(){
+  const mine = sel.step ? `<div class="mytag">나의 기소 — STEP ${sel.step}${
+    sel.kind ? ' · '+MKINDS.find(m=>m.k===sel.kind).t : ''}</div>` : '';
+  return `<details class="ref"><summary>사건 다시 보기 — ${cur.subject}</summary>
+   <div class="inner">
+    <div class="prob2">${cur.problem}</div>
+    ${cur.steps.map((t,i)=>`<div class="st2 ${sel.step===i+1?'mine':''}">
+      <span class="n2">${i+1}</span>${t}</div>`).join('')}
+    ${mine}
+   </div></details>`;
+}
+
+/* ── 화면: 인트로 ── */
+function renderIntro(){
+  $('#prog').textContent='';
+  const r=SAVE.rank();
+  $('#root').innerHTML=`
+   <div class="k px">VERIFIERS · 오답법정</div>
+   <h1 class="px">법정이 열립니다</h1>
+   <p class="lead">정답을 맞히는 게 아니라, 틀린 풀이를 심문하는 자리다.<br>최초로 끊어진 논리를 찾고, 증거로 방어하라.</p>
+   ${SAVE.log.length?`<div class="rankbox win">
+     <div class="rk">${r.n}</div>
+     <div class="rksub">신뢰도 ${SAVE.trust} · 심리한 사건 ${SAVE.log.length}건${
+       r.next?` · ${r.next}까지 ${r.need}`:` · 최고 직위`}</div>
+    </div>`:''}
+   <div class="rules win">
+    <b>절차</b><br>
+    사건 공개 → 기소(오류 위치+유형) → 확신 베팅 → 증거 제출 → 이의제기 → 최소 정정 → 교정 질문<br><br>
+    <b>배점</b>
+    <table class="score-tbl">
+     <tr><td>기소 (위치+유형)</td><td>2 + 2</td></tr>
+     <tr><td>확신 베팅</td><td>맞으면 +토큰, 틀리면 −토큰</td></tr>
+     <tr><td>증거 제출</td><td>2 · 부분 인정 1</td></tr>
+     <tr><td>이의제기</td><td>±2</td></tr>
+     <tr><td>최소 정정</td><td>1</td></tr>
+     <tr><td>교정 질문</td><td>1</td></tr>
+    </table>
+    <div class="tokennote">베팅 토큰은 사건마다 새로 주어지고 끝나면 사라진다.
+     판결 결과는 <b>신뢰도</b>로 남아 직위와 사건 해금을 결정한다.</div>
+   </div>
+   <button class="btn px" id="btnGo">입정</button>`;
+  $('#btnGo').onclick=renderChapters;
+}
+
+/* ── 챕터 선택 ── */
+function chapterList(){
+  const m={};
+  CASES.forEach((c,i)=>{ (m[c.chapter]=m[c.chapter]||[]).push(i); });
+  return Object.entries(m);
+}
+function lvOf(c){ const m=c.level.match(/Lv\.(\d)/); return m?+m[1]:1; }
+function locked(c){ return lvOf(c)>=4 && SAVE.trust<UNLOCK_HARD; }
+
+function renderChapters(){
+  $('#prog').textContent='';
+  const chs=chapterList();
+  const r=SAVE.rank();
+  $('#root').innerHTML=`
+   <div class="k px">사건 목록</div>
+   <h1 class="px" style="font-size:22px">어느 단원을 심리할까</h1>
+   <div class="rankbar">${r.n} · 신뢰도 <b>${SAVE.trust}</b></div>
+   ${chs.map(([name,idxs])=>{
+     const done=idxs.filter(i=>SAVE.played(CASES[i].id)).length;
+     return `<button class="lv" data-c="${name}">${name}
+       <span class="sub2">${idxs.length}개 사건 · 완료 ${done}/${idxs.length}</span></button>`;
+   }).join('')}
+   <button class="btn g px" id="back" style="margin-top:10px">뒤로</button>
+   <div class="note">단원을 고르면 그 안의 사건을 하나씩 선택할 수 있다.
+    Lv.4 이상은 신뢰도 ${UNLOCK_HARD} 이상에서 열린다. 쉬운 사건 한 건만 제대로 풀어도 충분하다.</div>`;
+  document.querySelectorAll('.lv').forEach(el=>el.addEventListener('click',
+    ()=>renderCaseList(el.dataset.c)));
+  $('#back').onclick=renderIntro;
+}
+
+/* ── 사건 개별 선택 ── */
+let pickSet=[];
+function renderCaseList(chapter){
+  $('#prog').textContent='';
+  pickSet=[];
+  const idxs=CASES.map((c,i)=>i).filter(i=>CASES[i].chapter===chapter);
+  $('#root').innerHTML=`
+   <div class="k px">${chapter}</div>
+   <h1 class="px" style="font-size:21px">심리할 사건을 고른다</h1>
+   <div class="rankbar">여러 건을 한 번에 고를 수 있다</div>
+   ${idxs.map(i=>{
+     const c=CASES[i], lk=locked(c), best=SAVE.best(c.id);
+     return `<button class="cs ${lk?'lk':''}" data-i="${i}" ${lk?'disabled':''}>
+       <span class="csl">${c.level}</span>
+       <span class="cst">${c.subject.split(' · ')[1]||c.subject}</span>
+       <span class="csm">${lk?`잠김 — 신뢰도 ${UNLOCK_HARD} 필요 (현재 ${SAVE.trust})`
+         : best!==null?`최고 ${best>0?'+':''}${best} / 13`:'미심리'}</span></button>`;
+   }).join('')}
+   <button class="btn px" id="n" disabled style="margin-top:8px">개정한다</button>
+   <button class="btn g px" id="back" style="margin-top:8px">단원 목록</button>`;
+  document.querySelectorAll('.cs').forEach(el=>el.addEventListener('click',()=>{
+    const i=+el.dataset.i;
+    if(pickSet.includes(i)){ pickSet=pickSet.filter(x=>x!==i); el.classList.remove('sel'); }
+    else { pickSet.push(i); el.classList.add('sel'); }
+    $('#n').disabled = pickSet.length===0;
+    $('#n').textContent = pickSet.length>1 ? `${pickSet.length}건 연속 개정` : '개정한다';
+  }));
+  $('#n').onclick=()=>{
+    queue=pickSet.slice().sort((a,b)=>a-b);
+    ci=0; caseScores=[]; caseLog=[]; startCase();
+  };
+  $('#back').onclick=renderChapters;
+}
+
+/* ── 사건 시작 ── */
+function startCase(){
+  cur=CASES[queue[ci]]; sel={step:null,kind:null,bet:null,ev:null,obj:null,corr:null,q:null};
+  si=0; setProg(); renderStep();
+}
+function goNext(){ si++; renderStep(); }
+
+function renderStep(){
+  const stage=STEPS[si];
+  if(stage==='present') return renderPresent();
+  if(stage==='accuse') return renderAccuse();
+  if(stage==='bet') return renderBet();
+  if(stage==='evidence') return renderEvidence();
+  if(stage==='objection') return renderObjection();
+  if(stage==='correction') return renderCorrection();
+  if(stage==='question') return renderQuestion();
+  if(stage==='result') return renderCaseResult();
+}
+
+/* 1) 사건 공개 */
+function renderPresent(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   <div class="case win">
+    <div class="tag">${cur.level} · ${cur.subject}</div>
+    <div class="prob">${cur.problem}</div>
+    ${cur.steps.map((s,i)=>`<div class="step" style="cursor:default"><span class="no">STEP ${i+1}</span>${s}</div>`).join('')}
+   </div>
+   <button class="btn px" id="n">읽었다 — 기소하러 간다</button>`;
+  $('#n').onclick=goNext;
+}
+
+/* 2) 기소: 최초 오류 위치 + 유형 */
+function renderAccuse(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   <div class="sh px">최초로 끊어진 지점은 어디인가</div>
+   <div id="steps">${cur.steps.map((s,i)=>`<div class="step" data-i="${i+1}"><span class="no">STEP ${i+1}</span>${s}</div>`).join('')}</div>
+   <div class="sh px">무엇이 잘못됐는가</div>
+   <div id="kinds">${cur.cand.map(k=>{const x=MKINDS.find(m=>m.k===k);
+     return `<button class="opt" data-k="${k}">${x.t}</button>`;}).join('')}</div>
+   <button class="btn px" id="n" disabled>기소한다</button>`;
+  document.querySelectorAll('#steps .step').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('#steps .step').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.step=+el.dataset.i; checkAccuse();
+  }));
+  document.querySelectorAll('#kinds .opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('#kinds .opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.kind=el.dataset.k; checkAccuse();
+  }));
+  $('#n').onclick=goNext;
+}
+function checkAccuse(){ $('#n').disabled = !(sel.step && sel.kind); }
+
+/* 3) 확신 베팅 */
+function renderBet(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   ${caseRef()}
+   <div class="sh px">이 기소, 얼마나 확신하는가</div>
+   <button class="opt" data-b="1">토큰 1개 — 안전<span class="d">맞으면 +1, 틀리면 −1</span></button>
+   <button class="opt" data-b="2">토큰 2개 — 보통<span class="d">맞으면 +2, 틀리면 −2</span></button>
+   <button class="opt" data-b="3">토큰 3개 — 확신<span class="d">맞으면 +3, 틀리면 −3</span></button>
+   <button class="btn px" id="n" disabled>베팅한다</button>`;
+  document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.bet=+el.dataset.b; $('#n').disabled=false;
+  }));
+  $('#n').onclick=goNext;
+}
+
+/* 4) 증거 제출 */
+function renderEvidence(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   ${caseRef()}
+   <div class="sh px">기소를 어떻게 입증할 것인가</div>
+   <div class="hint">유효한 접근은 하나가 아닐 수 있다. 논리적으로 결정적인 것을 고른다.</div>
+   ${cur.evOptions.map((o,i)=>`<button class="opt" data-i="${i}">${o.t}</button>`).join('')}
+   <button class="btn px" id="n" disabled>제출한다</button>`;
+  document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.ev=+el.dataset.i; $('#n').disabled=false;
+  }));
+  $('#n').onclick=goNext;
+}
+
+/* 5) 이의제기: 변호인 반론을 진단한다 */
+function renderObjection(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   ${caseRef()}
+   <div class="claim win"><div class="who">변호인 진술 — 피고 측</div>${cur.rival.claim}</div>
+   <div class="sh px">변호인의 반론, 어떻게 볼 것인가</div>
+   ${cur.rival.options.map((o,i)=>`<button class="opt" data-i="${i}">${o.t}</button>`).join('')}
+   <button class="btn px" id="n" disabled>판단한다</button>`;
+  document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.obj=+el.dataset.i; $('#n').disabled=false;
+  }));
+  $('#n').onclick=goNext;
+}
+
+/* 6) 최소 정정 */
+function renderCorrection(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   ${caseRef()}
+   <div class="sh px">가장 적게 고친다면</div>
+   ${cur.corrOptions.map((o,i)=>`<button class="opt" data-i="${i}">${o.t}</button>`).join('')}
+   <button class="btn px" id="n" disabled>정정한다</button>`;
+  document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.corr=+el.dataset.i; $('#n').disabled=false;
+  }));
+  $('#n').onclick=goNext;
+}
+
+/* 7) 교정 질문 */
+function renderQuestion(){
+  $('#root').innerHTML=`
+   ${stepBar()}
+   ${caseRef()}
+   <div class="sh px">피고가 스스로 오류를 깨닫게 할 질문은</div>
+   <div class="hint">답을 알려주지 않으면서, 볼 지점을 좁혀 주는 질문이 좋다.</div>
+   ${cur.qOptions.map((o,i)=>`<button class="opt" data-i="${i}">${o.t}</button>`).join('')}
+   <button class="btn px" id="n" disabled>판결로</button>`;
+  document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel.q=+el.dataset.i; $('#n').disabled=false;
+  }));
+  $('#n').onclick=goNext;
+}
+
+/* ── 채점 ── */
+function scoreCase(){
+  const rows=[];
+  let total=0;
+
+  const stepOK=sel.step===cur.firstBreak, kindOK=sel.kind===cur.kindAnswer;
+  const accusePts=(stepOK&&kindOK)?4:(stepOK||kindOK)?2:0;
+  total+=accusePts;
+  const myKind=MKINDS.find(m=>m.k===sel.kind), ansKind=MKINDS.find(m=>m.k===cur.kindAnswer);
+  rows.push({l:`기소 — 위치 ${stepOK?'정확':'오답'} · 유형 ${kindOK?'정확':'오답'}`,v:accusePts,ok:stepOK&&kindOK,
+    pick:`STEP ${sel.step} · ${myKind.t}`,
+    why: (stepOK&&kindOK)
+      ? `최초로 끊어진 지점을 정확히 짚었다.`
+      : `정답은 STEP ${cur.firstBreak} · ${ansKind.t}.` +
+        (!stepOK ? ` 뒤따라 나온 결과가 아니라, 논리가 처음 어긋난 줄을 짚어야 한다.` : ``)});
+
+  const accuseFull=stepOK&&kindOK;
+  const betPts=accuseFull? sel.bet : -sel.bet;
+  total+=betPts;
+  rows.push({l:`확신 베팅 (토큰 ${sel.bet})`,v:betPts,ok:accuseFull,
+    pick:`토큰 ${sel.bet}개`,
+    why: accuseFull
+      ? `기소가 정확해 건 만큼 얻었다.`
+      : `기소가 빗나가 건 만큼 잃었다. 확신이 낮을 땐 적게 거는 것도 전략이다.`});
+
+  const evPick=cur.evOptions[sel.ev], evS=evPick.s;
+  total+=evS;
+  const fulls=cur.evOptions.filter(o=>o.s===2);
+  const others=fulls.filter(o=>o!==evPick);
+  let evWhy;
+  if(evS===2){
+    evWhy=(evPick.d||`기소를 뒷받침하는 결정적 증거다.`)
+      + (others.length?` 참고로 “${others[0].t}”도 똑같이 유효한 접근이다.`:``);
+  } else if(evS===1){
+    evWhy=`${evPick.d} 부분 인정. 완전한 증거로는 “${fulls[0].t}”`;
+  } else {
+    evWhy=`${evPick.d} 유효한 증거는 “${fulls[0].t}”`;
+  }
+  rows.push({l:`증거 제출 (${evS}/2)`,v:evS,ok:evS===2, pick:evPick.t, why:evWhy});
+
+  const objPick=cur.rival.options[sel.obj], objRight=objPick.ok;
+  total+=objRight?2:-2;
+  rows.push({l:`이의제기`,v:objRight?2:-2,ok:objRight, pick:objPick.t,
+    why: objRight ? `변호인 반론의 성격을 정확히 짚었다.`
+                  : `정답은 “${cur.rival.options.find(o=>o.ok).t}”`});
+
+  const corrPick=cur.corrOptions[sel.corr], corrOK=corrPick.ok;
+  total+=corrOK?1:0;
+  rows.push({l:`최소 정정`,v:corrOK?1:0,ok:corrOK, pick:corrPick.t,
+    why: corrOK ? `가장 적은 수정으로 논리를 복구했다.`
+                : `${corrPick.d||'과하거나 부족한 정정이다.'} 정답은 “${cur.corrOptions.find(o=>o.ok).t}”`});
+
+  const qPick=cur.qOptions[sel.q], qOK=qPick.ok;
+  total+=qOK?1:0;
+  rows.push({l:`교정 질문`,v:qOK?1:0,ok:qOK, pick:qPick.t,
+    why: qOK ? `답을 알려주지 않고 스스로 깨닫게 하는 질문이다.`
+             : `${qPick.d||'좋은 교정 질문이 아니다.'} 정답은 “${cur.qOptions.find(o=>o.ok).t}”`});
+
+  return {rows,total};
+}
+
+function renderCaseResult(){
+  const r=scoreCase();
+  caseScores.push(r.total); caseLog.push({case:cur,rows:r.rows});
+
+  /* 신뢰도 반영 — 재심으로 다시 푼 사건은 기록만 남기고 신뢰도를 주지 않는다 */
+  const isRetrial = !!SAVE.retried[cur.id];
+  const before = SAVE.trust;
+  let gain = 0;
+  if(!isRetrial){
+    gain = Math.round(r.total/2);          /* 13점 만점 → 최대 +7 */
+    SAVE.trust = Math.max(0, SAVE.trust+gain);
+  }
+  SAVE.log.push({caseId:cur.id, level:cur.level, subject:cur.subject,
+    score:r.total, max:13, rounds:r.rows.map(x=>({l:x.l,v:x.v,ok:x.ok})),
+    retrial:isRetrial, at:Date.now()});
+  delete SAVE.retried[cur.id];
+
+  const isLast = ci===queue.length-1;
+  const rk=SAVE.rank();
+  $('#root').innerHTML=`
+   <div class="grade"><div class="g px" style="color:${r.total>=8?'var(--sa)':r.total>=4?'var(--wa)':'var(--fa)'}">${r.total>0?'+':''}${r.total}</div>
+    <div class="sub">${cur.level} · 이 사건의 판결 점수</div></div>
+   <div class="trustbar win">
+    <span class="tl">신뢰도</span>
+    <span class="tv">${before} → <b>${SAVE.trust}</b>
+     <i class="${gain>0?'up':'flat'}">${isRetrial?'재심 · 신뢰도 변동 없음':gain>0?`+${gain}`:'±0'}</i></span>
+    <span class="tr2">${rk.n}${rk.next?` · ${rk.next}까지 ${rk.need}`:''}</span>
+   </div>
+   ${caseRef()}
+   <div class="win" style="padding:14px 15px">
+    ${r.rows.map(row=>`
+      <div class="res-row">
+        <span class="badge ${row.ok?'ok':row.v>0?'part':'no'}">${row.ok?'인정':row.v>0?'일부 인정':'기각'}</span>
+        <span class="l">${row.l}</span>
+        <span class="v ${row.v>0?'pos':row.v<0?'neg':'zero'}">${row.v>0?'+':''}${row.v}</span>
+      </div>
+      ${row.pick?`<div class="pick">└ 나의 선택: ${row.pick}</div>`:''}
+      <div class="why ${row.ok?'':row.v>0?'part':'bad'}"><b>${row.ok?'정확':row.v>0?'부분 인정':'오답'}</b> — ${row.why}</div>`).join('')}
+   </div>
+   ${r.total<13 ? `<button class="btn g px" id="retry" style="margin-top:12px"
+      ${SAVE.trust<RETRIAL_COST?'disabled':''}>재심 청구 — 신뢰도 ${RETRIAL_COST} 지불${
+      SAVE.trust<RETRIAL_COST?' (부족)':''}</button>
+     <div class="note" style="margin-top:8px">재심은 같은 사건을 다시 심리한다.
+      기록에는 남지만 신뢰도는 오르지 않는다.</div>`:''}
+   <button class="btn px" id="n" style="margin-top:12px">${isLast?'최종 판결로':'다음 사건'}</button>`;
+  const rt=$('#retry');
+  if(rt) rt.onclick=()=>{
+    if(SAVE.trust<RETRIAL_COST) return;
+    SAVE.trust-=RETRIAL_COST; SAVE.retried[cur.id]=true;
+    caseScores.pop(); caseLog.pop();
+    startCase();
+  };
+  $('#n').onclick=()=>{
+    if(isLast) renderFinal();
+    else { ci++; startCase(); }
+  };
+}
+
+/* ── 최종 결과 ── */
+function renderFinal(){
+  $('#prog').textContent='';
+  const total=caseScores.reduce((a,b)=>a+b,0);
+  const max=queue.length*13;
+  const title = total>=max*0.75?'명판관':total>=max*0.45?'배심원':'신입 검사';
+  const allRows=caseLog.flatMap(c=>c.rows);
+  const byType={};
+  ['기소','확신','증거','이의','정정','교정'].forEach(key=>{
+    const rs=allRows.filter(r=>r.l.startsWith(key));
+    const ok=rs.filter(r=>r.ok).length;
+    byType[key]={ok,total:rs.length};
+  });
+  const weak=Object.entries(byType).filter(([,v])=>v.total&&v.ok/v.total<0.5).map(([k])=>k);
+  $('#root').innerHTML=`
+   <div class="grade"><div class="g px">${title}</div>
+    <div class="sub">총점 ${total} / ${max}</div></div>
+   <div class="sh px">라운드별 정확도</div>
+   <div class="win" style="padding:14px 15px">
+    ${Object.entries(byType).map(([k,v])=>`<div class="res-row">
+      <span class="l">${k}</span>
+      <span class="v ${v.ok===v.total?'pos':v.ok===0?'neg':'zero'}">${v.ok} / ${v.total}</span></div>`).join('')}
+   </div>
+   ${weak.length?`<div class="why bad" style="margin-top:12px"><b>보완할 지점</b> — ${weak.join(', ')} 단계의 정확도가 절반을 밑돈다.</div>`:
+     `<div class="why" style="margin-top:12px"><b>고르게 잘했다</b> — 절반 미만인 단계가 없다.</div>`}
+   <div class="sh px">사건별 점수</div>
+   <div class="win" style="padding:14px 15px">
+    ${caseLog.map((c,i)=>`<div class="res-row">
+      <span class="l">${c.case.level} · ${c.case.subject}</span>
+      <span class="v ${caseScores[i]>=8?'pos':caseScores[i]<4?'neg':'zero'}">${caseScores[i]>0?'+':''}${caseScores[i]}</span></div>`).join('')}
+   </div>
+   <div class="sh px">심리 기록 (누적 ${SAVE.log.length}건)</div>
+   <div class="win" style="padding:14px 15px">
+    ${SAVE.log.slice(-8).reverse().map(x=>`<div class="res-row">
+      <span class="l">${x.level}${x.retrial?' · 재심':''}</span>
+      <span class="v ${x.score>=8?'pos':x.score<4?'neg':'zero'}">${x.score>0?'+':''}${x.score} / ${x.max}</span></div>`).join('')}
+    <div class="note" style="margin-top:10px;padding-top:9px">
+     현재 신뢰도 <b style="color:var(--brass)">${SAVE.trust}</b> · ${SAVE.rank().n}<br>
+     기록은 이 세션에만 남는다. 계정 연동 시 학생별 누적 성취 자료로 쓸 수 있다.</div>
+   </div>
+   <button class="btn px" id="more" style="margin-top:14px">다른 사건 심리</button>
+   <button class="btn g px" id="again" style="margin-top:8px">처음으로</button>
+   <div class="note">실제 수업에서는 팀 대항으로 진행되며, 사건팩은 오류 배치가 다른 여러 버전으로 확장됩니다.</div>`;
+  $('#more').onclick=()=>{caseScores=[];caseLog=[];renderChapters();};
+  $('#again').onclick=()=>{caseScores=[];caseLog=[];renderIntro();};
+}
+
+renderIntro();
+</script>
